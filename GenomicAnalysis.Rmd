@@ -1,0 +1,94 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+```{r}
+plot(cars)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+### Load Required Libraries
+```{r}
+
+```
+
+
+### Load Data 
+```{r}
+
+```
+
+### Create Sequali Environment, if not already created. 
+#### Set eval to FALSE to ensure code does not run during knit
+```{bash, eval=FALSE}
+conda create -n sequali-env python=3.11 -c conda-forge
+conda activate sequali-env
+conda install -c conda-forge -c bioconda sequali
+```
+
+
+### Run inital QC in Sequali Environment on d. Hansenii and m. Guilliermondii
+Using Preliminary data 
+```{bash, eval=FALSE}
+conda activate sequali-env
+sequali --outdir outputs/dh_sequali_reports data/yeastSample1/debaryomycesHansenii.fastq
+sequali --outdir outputs/mg_sequali_reports data/yeastSample1/meyerozymaGuilliermondii.fastq
+conda deactivate 
+```
+
+### Based on the above metric fliter the reads using filtlong
+Use conda to install [filtlong](https://anaconda.org/channels/bioconda/packages/filtlong/overview) package. Allows filtering of long reads based on certain criteria. Ie. average Q score or size. 
+```{bash, eval=FALSE}
+conda install bioconda::filtlong
+```
+
+Run downloaded file to analyse using filtlong package. Filter the long read fastq to keep longest 75% of the sequences save results to outputs/ folder. 
+```{bash, eval=FALSE}
+filtlong --keep_percent 75 data/UPDATE.fastq | gzip > outputs/filtered_UPDATE.fastq.gz
+```
+
+### Run Again QC in Sequali Environment to check filtered files
+```{bash}
+conda activate sequali-env
+sequali --outdir outputs/FilteredUPDATE data/FilteredNAME OF FILE 
+conda deactivate 
+```
+
+## Assmebly 
+### use Flye novo assembler
+Create Flye environment if not already done
+```{bash, eval=FALSE}
+conda create -n flye-env python=3.10 -c conda-forge
+conda activate flye-env
+conda install flye=2.9.6 -c bioconda
+```
+
+```{bash, eval=FALSE}
+# Ensure the output directory exists
+mkdir -p outputs/flye_output
+
+conda activate flye-env
+# Run the Flye assembler, note the expected genome size
+flye --nano-raw data/UPDATE.fastq --out-dir outputs/flye_output --threads 8 --genome-size 12m
+flye --nano-raw data/UPDATE.fastq --out-dir outputs/flye_output --threads 8 --genome-size 12m
+conda deactivate 
+```
+
+## Polish draft assembly 
+### Use medaka 
+Create medaka environment, if not already done
+```{bash, eval=FALSE}
+conda create -n medaka_final -c conda-forge -c bioconda -c nanoporetech medaka python=3.10 -y
+conda activate medaka_final
+```
+
