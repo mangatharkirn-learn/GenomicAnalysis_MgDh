@@ -52,7 +52,9 @@ Use conda to install [filtlong](https://anaconda.org/channels/bioconda/packages/
 conda install bioconda::filtlong
 ```
 
-Run downloaded file to analyse using filtlong package. Filter the long read fastq to keep longest 75% of the sequences save results to outputs/ folder. 
+Run downloaded file to analyse using filtlong package.
+based on the QC sequali html file: 
+Filter the long read fastq to keep longest 75% of the sequences save results to outputs/ folder. 
 ```{bash, eval=FALSE}
 filtlong --keep_percent 75 data/UPDATE.fastq | gzip > outputs/filtered_UPDATE.fastq.gz
 ```
@@ -66,6 +68,7 @@ conda deactivate
 
 ## Assmebly 
 ### use Flye novo assembler
+
 Create Flye environment if not already done
 ```{bash, eval=FALSE}
 conda create -n flye-env python=3.10 -c conda-forge
@@ -73,14 +76,17 @@ conda activate flye-env
 conda install flye=2.9.6 -c bioconda
 ```
 
+Run 5 rounds of internal polishing
+IDO ASK: Based on [Flye](https://github.com/mikolmogorov/Flye/blob/flye/docs/USAGE.md)
+Why are you having us do 5 iterations/ runs? Reduce mapping errors by alignment to corrected assembly with subseqent iteration. how can you tell if you over polished? What biological background/ understanding is reqired? 
 ```{bash, eval=FALSE}
 # Ensure the output directory exists
 mkdir -p outputs/flye_output
 
 conda activate flye-env
 # Run the Flye assembler, note the expected genome size
-flye --nano-raw data/UPDATE.fastq --out-dir outputs/flye_output --threads 8 --genome-size 12m
-flye --nano-raw data/UPDATE.fastq --out-dir outputs/flye_output --threads 8 --genome-size 12m
+flye --nano-raw data/DATA1.fastq --out-dir outputs/flye_output --threads 8 --genome-size 12m --iterations 5
+flye --nano-raw data/DATA2.fastq --out-dir outputs/flye_output --threads 8 --genome-size 12m --iterations 5
 conda deactivate 
 ```
 
@@ -91,4 +97,34 @@ Create medaka environment, if not already done
 conda create -n medaka_final -c conda-forge -c bioconda -c nanoporetech medaka python=3.10 -y
 conda activate medaka_final
 ```
+
+Fun 2 rounds of medaka 
+```{bash}
+# Activate your environment
+conda activate medaka_final
+
+# Ensure directories exist
+mkdir -p outputs/medaka_round1 outputs/medaka_round2
+
+# Round 1
+medaka_consensus -i data/UPDATE.fastq.gz -d outputs/flye_output/assembly.fasta -o outputs/medaka_round1 -t 8
+
+# Round 2
+medaka_consensus -i data/UPADTE.fastq.gz -d outputs/medaka_round1/consensus.fasta -o outputs/medaka_round2 -t 8
+```
+
+## Evaluate the assembly
+### Structural annotation - funannotate 
+# in docker pull full image containing core database
+```{bash, eval=FALSE}
+docker pull nextgenusfs/funannotate
+```
+
+[funannotate usage](https://funannotate.readthedocs.io/en/stable/install.html)
+```{bash}
+
+```
+
+
+### eggNOG
 
