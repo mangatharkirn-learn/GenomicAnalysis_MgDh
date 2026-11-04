@@ -9,7 +9,7 @@ output: html_notebook
 ```
 
 
-### Load and Set-Up Data 
+### Load Reference Datasets
 ```{bash}
 # for Debaryomyces hansenii
 # SEARCH: https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000006445.2/
@@ -47,8 +47,10 @@ conda install -c conda-forge -c bioconda sequali
 Using Preliminary data 
 ```{bash, eval=FALSE}
 conda activate sequali-env
-sequali --outdir outputs_debaryomyces/dh_sequali_reports data_debaryomyces/debaryomycesHansenii.fastq
-sequali --outdir outputs_meyerozyma/mg_sequali_reports data_meyerozyma/meyerozymaGuilliermondii.fastq
+sequali --outdir outputs_debaryomyces/dh_sequali_reports data_debaryomyces/debaryomycesHansenii2025.fastq
+sequali --outdir outputs_meyerozyma/mg_sequali_reports data_meyerozyma/meyerozymaGuilliermondii2025.fastq
+sequali --outdir outputs_debaryomyces/dh_sequali_reports data_debaryomyces/debaryomycesHansenii2026.fastq
+sequali --outdir outputs_meyerozyma/mg_sequali_reports data_meyerozyma/meyerozymaGuilliermondii2026.fastq
 conda deactivate 
 ```
 
@@ -62,26 +64,36 @@ Run downloaded file to analyse using filtlong package.
 based on the QC sequali html file: 
 Filter the long read fastq to keep longest 75% of the sequences save results to outputs/ folder. 
 ```{bash, eval=FALSE}
-filtlong --keep_percent 75 data_debaryomyces/debaryomycesHansenii.fastq | gzip > outputs_debaryomces/filtered_debaryomycesHansenii.fastq.gz
-filtlong --keep_percent 75 data_meyerozyma/meyerozymaGuilliermondii.fastq | gzip > outputs_meyerozyma/filtered_meyerozymaGuilliermondii.fastq.gz
+filtlong --keep_percent 75 data_debaryomyces/debaryomycesHansenii2025.fastq | gzip > outputs_debaryomces/filtered_debaryomycesHansenii2025.fastq.gz
+filtlong --keep_percent 75 data_meyerozyma/meyerozymaGuilliermondii2025.fastq | gzip > outputs_meyerozyma/filtered_meyerozymaGuilliermondii2025.fastq.gz
+filtlong --keep_percent 75 data_debaryomyces/debaryomycesHansenii2026.fastq | gzip > outputs_debaryomces/filtered_debaryomycesHansenii2026.fastq.gz
+filtlong --keep_percent 75 data_meyerozyma/meyerozymaGuilliermondii2026.fastq | gzip > outputs_meyerozyma/filtered_meyerozymaGuilliermondii2026.fastq.gz
 ```
 
 ### Run Again QC in Sequali Environment to check filtered files
 ```{bash}
 conda activate sequali-env
-sequali --outdir outputs_debaryomyces/filtered_sequali_reports data_debaryomyces/filtered_debaryomycesHansenii.fastq
-sequali --outdir outputs_meyerozyma/filtered_sequali_reports data_meyerozyma/filtered_meyerozymaGuilliermondii.fastq
+sequali --outdir outputs_debaryomyces/filtered_sequali_reports data_debaryomyces/filtered_debaryomycesHansenii2025.fastq
+sequali --outdir outputs_meyerozyma/filtered_sequali_reports data_meyerozyma/filtered_meyerozymaGuilliermondii2025.fastq
+sequali --outdir outputs_debaryomyces/filtered_sequali_reports data_debaryomyces/filtered_debaryomycesHansenii2026.fastq
+sequali --outdir outputs_meyerozyma/filtered_sequali_reports data_meyerozyma/filtered_meyerozymaGuilliermondii2026.fastq
 conda deactivate 
 ```
 
 ## Assmebly 
 ### use Flye novo assembler
-
 Create Flye environment if not already done
 ```{bash, eval=FALSE}
 conda create -n flye-env python=3.10 -c conda-forge
 conda activate flye-env
 conda install flye=2.9.6 -c bioconda
+```
+
+# Concatenate same yeast strain fastq files for 2025 and 2026 to increase coverage for assembly
+```{bash}
+cat data_meyerozyma/filtered_meyerozymaGuilliermondii2025.fastq data_meyerozyma/filtered_meyerozymaGuilliermondii2026.fastq > data_meyerozyma/meyerozymaGuilliermondii_final.fastq
+
+cat data_debaryomyces/filtered_debaryomycesHansenii2025.fastq data_debaryomyces/filtered_debaryomycesHansenii2026.fastq > data_debaryomyces/debaryomycesHansenii_final.fastq
 ```
 
 Run 5 rounds of internal polishing
