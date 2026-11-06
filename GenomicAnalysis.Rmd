@@ -137,7 +137,7 @@ conda create -n medaka_final -c conda-forge -c bioconda -c nanoporetech medaka p
 conda activate medaka_final
 ```
 
-Run 2 rounds of medaka - Debaryomyces
+Run 2 rounds of medaka - Debaryomyces individually 2025 and 2026 samples
 ```{bash}
 # Ensure directories exist
 mkdir -p outputs_debaryomyces/medaka_round1_2025 outputs_debaryomyces/medaka_round2_2025
@@ -160,7 +160,7 @@ medaka_consensus -i outputs_debaryomyces/filtered_debaryomycesHansenii2026.fastq
 medaka_consensus -i outputs_debaryomyces/filtered_debaryomycesHansenii2026.fastq.gz -d outputs_debaryomyces/medaka_round1_2026/consensus.fasta -o outputs_debaryomyces/medaka_round2_2026 -t 8
 ```
 
-Run 2 rounds of medaka - Meyerozyma 2025 sample
+Run 2 rounds of medaka - Meyerozyma individually 2025 and 2026 samples
 ```{bash}
 # Activate your environment
 conda activate medaka_final
@@ -185,7 +185,7 @@ medaka_consensus -i outputs_meyerozyma/filtered_meyerozymaGuilliermondii2026.fas
 
 ## Completeness of assembly 
 ### BUSCO 
-Debaryomyces 
+Debaryomyces individually 2025 and 2026 samples
 ```{bash}
 mkdir -p outputs_debaryomyces/busco_debaryomyces_2025
 
@@ -216,7 +216,7 @@ docker run --rm \
         -f
 ```
 
-Meyerozyma 2025 sample 
+Meyerozyma individually 2025 and 2026 samples
 ```{bash}
 # for Meyerozyma guilliermondii 
 mkdir -p outputs_meyerozyma/busco_meyerozyma_2025
@@ -229,7 +229,8 @@ docker run --rm \
         -o outputs_meyerozyma/busco_meyerozyma_2025 \
         -l saccharomycetaceae_odb12 \
         -m genome \
-        -c 8
+        -c 8 \
+        -f
 
 mkdir -p outputs_meyerozyma/busco_meyerozyma_2026
 
@@ -241,14 +242,16 @@ docker run --rm \
         -o outputs_meyerozyma/busco_meyerozyma_2026 \
         -l saccharomycetaceae_odb12 \
         -m genome \
-        -c 8
+        -c 8 \
+        -f
 ```
 
 ### Quast 
-quast - Debaryomyces 
+quast - Debaryomyces individually 2025 and 2026 samples
 ```{bash}
 mkdir -p outputs_debaryomyces/quast_output2025
 
+# unzip downloaded files.  
 gunzip -k data_debaryomyces/*.gz
 
 docker run --rm -v "$(pwd)":/data_debaryomyces -w /data_debaryomyces quay.io/biocontainers/quast:5.3.0--py313pl5321h5ca1c30_2 \
@@ -256,11 +259,20 @@ docker run --rm -v "$(pwd)":/data_debaryomyces -w /data_debaryomyces quay.io/bio
   -r data_debaryomyces/GCF_000006445.2_ASM644v2_genomic.fna \
   -g data_debaryomyces/GCF_000006445.2_ASM644v2_genomic.gff \
   -o outputs_debaryomyces/quast_output2025
+
+mkdir -p outputs_debaryomyces/quast_output2026
+
+docker run --rm -v "$(pwd)":/data_debaryomyces -w /data_debaryomyces quay.io/biocontainers/quast:5.3.0--py313pl5321h5ca1c30_2 \
+  quast.py outputs_debaryomyces/medaka_round2_2026/consensus.fasta \
+  -r data_debaryomyces/GCF_000006445.2_ASM644v2_genomic.fna \
+  -g data_debaryomyces/GCF_000006445.2_ASM644v2_genomic.gff \
+  -o outputs_debaryomyces/quast_output2026
 ```
 
-quast - Meyerozyma 
+quast - Meyerozyma individually 2025 and 2026 samples
 ```{bash}
 mkdir -p outputs_meyerozyma/quast_output2025
+mkdir -p outputs_meyerozyma/quast_output2026
 
 gunzip -k data_meyerozyma/*.gz
 
@@ -269,6 +281,12 @@ docker run --rm -v "$(pwd)":/data_meyerozyma -w /data_meyerozyma quay.io/biocont
   -r data_meyerozyma/GCF_000149425.1_ASM14942v1_genomic.fna \
   -g data_meyerozyma/GCF_000149425.1_ASM14942v1_genomic.gff \
   -o outputs_meyerozyma/quast_output2025
+  
+docker run --rm -v "$(pwd)":/data_meyerozyma -w /data_meyerozyma quay.io/biocontainers/quast:5.3.0--py313pl5321h5ca1c30_2 \
+  quast.py outputs_meyerozyma/medaka_round2_2026/consensus.fasta \
+  -r data_meyerozyma/GCF_000149425.1_ASM14942v1_genomic.fna \
+  -g data_meyerozyma/GCF_000149425.1_ASM14942v1_genomic.gff \
+  -o outputs_meyerozyma/quast_output2026
 ```
 
 # Increase assembly coverage
