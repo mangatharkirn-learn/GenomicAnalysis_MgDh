@@ -14,24 +14,36 @@ output: html_notebook
 # for Debaryomyces hansenii
 # SEARCH: https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000006445.2/
 # Download the reference genome from refseq .fna file 
-wget -nc -P data/https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/006/445/GCF_000006445.2_ASM644v2/GCF_000006445.2_ASM644v2_genomic.fna.gz
+wget -nc \
+-P data_debaryomyces/ \
+https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/006/445/GCF_000006445.2_ASM644v2/GCF_000006445.2_ASM644v2_genomic.fna.gz
 
 # Download the genome annotation file from refseq .ggf file 
-wget -nc -P data/https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/006/445/GCF_000006445.2_ASM644v2/GCF_000006445.2_ASM644v2_genomic.gff.gz
+wget -nc \
+-P data_debaryomyces/ \
+https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/006/445/GCF_000006445.2_ASM644v2/GCF_000006445.2_ASM644v2_genomic.gff.gz
 
 # Download the reference proteome from refseq .faa file 
-wget -nc -P data/https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/006/445/GCF_000006445.2_ASM644v2/GCF_000006445.2_ASM644v2_protein.faa.gz
+wget -nc \
+-P data_debaryomyces/ \
+https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/006/445/GCF_000006445.2_ASM644v2/GCF_000006445.2_ASM644v2_protein.faa.gz
 
 # for Meyerozyma guilliermondii 
 # SEARCH: https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000149425.1/
 # Download the reference genome from refseq .fna file 
-wget -nc -P data/https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/149/425/GCF_000149425.1_ASM14942v1/GCF_000149425.1_ASM14942v1_genomic.fna.gz
+wget -nc \
+-P data_meyerozyma/ \
+https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/149/425/GCF_000149425.1_ASM14942v1/GCF_000149425.1_ASM14942v1_genomic.fna.gz
 
 # Download the genome annotation file from refseq .ggf file 
-wget -nc -P data/https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/149/425/GCF_000149425.1_ASM14942v1/GCF_000149425.1_ASM14942v1_genomic.gff.gz
+wget -nc \
+-P data_meyerozyma/ \
+https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/149/425/GCF_000149425.1_ASM14942v1/GCF_000149425.1_ASM14942v1_genomic.gff.gz
 
 # Download the reference proteome from refseq .faa file 
-wget -nc -P data/https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/149/425/GCF_000149425.1_ASM14942v1/GCF_000149425.1_ASM14942v1_protein.faa.gz
+wget -nc \
+-P data_meyerozyma/ \
+https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/149/425/GCF_000149425.1_ASM14942v1/GCF_000149425.1_ASM14942v1_protein.faa.gz
 ```
 
 ### Create Sequali Environment, if not already created. 
@@ -60,23 +72,28 @@ Use conda to install [filtlong](https://anaconda.org/channels/bioconda/packages/
 conda install bioconda::filtlong
 ```
 
-Run downloaded file to analyse using filtlong package.
-based on the QC sequali html file: 
-Filter the long read fastq to keep longest 75% of the sequences save results to outputs/ folder. 
+Run downloaded file to analyse using filtlong package based on the QC sequali html file: 
 ```{bash, eval=FALSE}
-filtlong --keep_percent 75 data_debaryomyces/debaryomycesHansenii2025.fastq | gzip > outputs_debaryomces/filtered_debaryomycesHansenii2025.fastq.gz
-filtlong --keep_percent 75 data_meyerozyma/meyerozymaGuilliermondii2025.fastq | gzip > outputs_meyerozyma/filtered_meyerozymaGuilliermondii2025.fastq.gz
-filtlong --keep_percent 75 data_debaryomyces/debaryomycesHansenii2026.fastq | gzip > outputs_debaryomces/filtered_debaryomycesHansenii2026.fastq.gz
-filtlong --keep_percent 75 data_meyerozyma/meyerozymaGuilliermondii2026.fastq | gzip > outputs_meyerozyma/filtered_meyerozymaGuilliermondii2026.fastq.gz
+filtlong --keep_percent 90 --min_length 1000 data_debaryomyces/debaryomycesHansenii2025.fastq | gzip > outputs_debaryomyces/filtered_debaryomycesHansenii2025.fastq.gz
+
+filtlong --keep_percent 90 --min_length 1000 data_debaryomyces/debaryomycesHansenii2026.fastq | gzip > outputs_debaryomyces/filtered_debaryomycesHansenii2026.fastq.gz
+
+filtlong --keep_percent 90 --min_length 1000 data_meyerozyma/meyerozymaGuilliermondii2025.fastq | gzip > outputs_meyerozyma/filtered_meyerozymaGuilliermondii2025.fastq.gz
+
+filtlong --keep_percent 90 --min_length 1000 data_meyerozyma/meyerozymaGuilliermondii2026.fastq | gzip > outputs_meyerozyma/filtered_meyerozymaGuilliermondii2026.fastq.gz
 ```
 
-### Run Again QC in Sequali Environment to check filtered files
+### Run QC again in Sequali Environment to check filtered files
 ```{bash}
 conda activate sequali-env
-sequali --outdir outputs_debaryomyces/filtered_sequali_reports data_debaryomyces/filtered_debaryomycesHansenii2025.fastq
-sequali --outdir outputs_meyerozyma/filtered_sequali_reports data_meyerozyma/filtered_meyerozymaGuilliermondii2025.fastq
-sequali --outdir outputs_debaryomyces/filtered_sequali_reports data_debaryomyces/filtered_debaryomycesHansenii2026.fastq
-sequali --outdir outputs_meyerozyma/filtered_sequali_reports data_meyerozyma/filtered_meyerozymaGuilliermondii2026.fastq
+sequali --outdir outputs_debaryomyces/filtered_sequali_reports outputs_debaryomyces/filtered_debaryomycesHansenii2025.fastq.gz
+
+sequali --outdir outputs_debaryomyces/filtered_sequali_reports outputs_debaryomyces/filtered_debaryomycesHansenii2026.fastq.gz
+
+sequali --outdir outputs_meyerozyma/filtered_sequali_reports outputs_meyerozyma/filtered_meyerozymaGuilliermondii2025.fastq.gz
+
+sequali --outdir outputs_meyerozyma/filtered_sequali_reports outputs_meyerozyma/filtered_meyerozymaGuilliermondii2026.fastq.gz
+
 conda deactivate 
 ```
 
@@ -89,25 +106,26 @@ conda activate flye-env
 conda install flye=2.9.6 -c bioconda
 ```
 
-# Concatenate same yeast strain fastq files for 2025 and 2026 to increase coverage for assembly
-```{bash}
-cat data_meyerozyma/filtered_meyerozymaGuilliermondii2025.fastq data_meyerozyma/filtered_meyerozymaGuilliermondii2026.fastq > data_meyerozyma/meyerozymaGuilliermondii_final.fastq
-
-cat data_debaryomyces/filtered_debaryomycesHansenii2025.fastq data_debaryomyces/filtered_debaryomycesHansenii2026.fastq > data_debaryomyces/debaryomycesHansenii_final.fastq
-```
-
-Run 5 rounds of internal polishing
-IDO ASK: Based on [Flye](https://github.com/mikolmogorov/Flye/blob/flye/docs/USAGE.md)
-Why are you having us do 5 iterations/ runs? Reduce mapping errors by alignment to corrected assembly with subseqent iteration. how can you tell if you over polished? What biological background/ understanding is reqired? 
+### Flye - Run 5 rounds of internal polishing
+[Flye](https://github.com/mikolmogorov/Flye/blob/flye/docs/USAGE.md)
+Why are you having us do 5 iterations/ runs? Reduce mapping errors by alignment to corrected assembly with subseqent iteration. how can you tell if you over polished? What biological background/ understanding is required? 
 ```{bash, eval=FALSE}
 # Ensure the output directory exists
-mkdir -p outputs_debaryomyces/flye_output
-mkdir -p outputs_meyerozyma/flye_output
+mkdir -p outputs_debaryomyces/flye_output2025
+mkdir -p outputs_meyerozyma/flye_output2025
+
+mkdir -p outputs_debaryomyces/flye_output2026
+mkdir -p outputs_meyerozyma/flye_output2026
 
 conda activate flye-env
 # Run the Flye assembler, note the expected genome size
-flye --nano-raw data_debaryomyces/filtered_debaryomycesHansenii.fastq --out-dir outputs_debaryomyces/flye_output --threads 8 --genome-size 12m --iterations 5
-flye --nano-raw data_meyerozyma/filtered_meyerozymaGuilliermondii.fastq --out-dir outputs_meyerozyma/flye_output --threads 8 --genome-size 12m --iterations 5
+flye --nano-raw outputs_debaryomyces/filtered_debaryomycesHansenii2025.fastq.gz --out-dir outputs_debaryomyces/flye_output2025 --threads 8 --genome-size 12m --iterations 5
+
+flye --nano-raw outputs_meyerozyma/filtered_meyerozymaGuilliermondii2025.fastq.gz --out-dir outputs_meyerozyma/flye_output2025 --threads 8 --genome-size 12m --iterations 5
+
+flye --nano-raw outputs_debaryomyces/filtered_debaryomycesHansenii2026.fastq.gz --out-dir outputs_debaryomyces/flye_output2026 --threads 8 --genome-size 12m --iterations 5
+
+flye --nano-raw outputs_meyerozyma/filtered_meyerozymaGuilliermondii2026.fastq.gz --out-dir outputs_meyerozyma/flye_output2026 --threads 8 --genome-size 12m --iterations 5
 conda deactivate 
 ```
 
@@ -121,87 +139,160 @@ conda activate medaka_final
 
 Run 2 rounds of medaka - Debaryomyces
 ```{bash}
+# Ensure directories exist
+mkdir -p outputs_debaryomyces/medaka_round1_2025 outputs_debaryomyces/medaka_round2_2025
+mkdir -p outputs_debaryomyces/medaka_round1_2026 outputs_debaryomyces/medaka_round2_2026
+
 # Activate your environment
 conda activate medaka_final
 
-# Ensure directories exist
-mkdir -p outputs_debaryomyces/medaka_round1 outputs_debaryomyces/medaka_round2
+# Round 1 2025
+medaka_consensus -i outputs_debaryomyces/filtered_debaryomycesHansenii2025.fastq.gz -d outputs_debaryomyces/flye_output2025/assembly.fasta -o outputs_debaryomyces/medaka_round1_2025 -t 8
 
-# Round 1
-medaka_consensus -i data_debaryomyces/filtered_debaryomycesHansenii.fastq -d outputs_debaryomyces/flye_output/assembly.fasta -o outputs_debaryomyces/medaka_round1 -t 8
+# Round 2 2025 
+medaka_consensus -i outputs_debaryomyces/filtered_debaryomycesHansenii2025.fastq.gz -d outputs_debaryomyces/medaka_round1_2025/consensus.fasta -o outputs_debaryomyces/medaka_round2_2025 -t 8
 
-# Round 2
-medaka_consensus -i data_debaryomyces/filtered_debaryomycesHansenii.fastq -d outputs_debaryomyces/medaka_round1/consensus.fasta -o outputs_debaryomyces/medaka_round2 -t 8
+
+# Round 1 2026
+medaka_consensus -i outputs_debaryomyces/filtered_debaryomycesHansenii2026.fastq.gz -d outputs_debaryomyces/flye_output2026/assembly.fasta -o outputs_debaryomyces/medaka_round1_2026 -t 8
+
+# Round 2 2026 
+medaka_consensus -i outputs_debaryomyces/filtered_debaryomycesHansenii2026.fastq.gz -d outputs_debaryomyces/medaka_round1_2026/consensus.fasta -o outputs_debaryomyces/medaka_round2_2026 -t 8
 ```
 
-Run 2 rounds of medaka - Meyerozyma
+Run 2 rounds of medaka - Meyerozyma 2025 sample
 ```{bash}
 # Activate your environment
 conda activate medaka_final
 
 # Ensure directories exist
-mkdir -p outputs_meyerozyma/medaka_round1 outputs_meyerozyma/medaka_round2
+mkdir -p outputs_meyerozyma/medaka_round1_2025 outputs_meyerozyma/medaka_round2_2025
+mkdir -p outputs_meyerozyma/medaka_round1_2026 outputs_meyerozyma/medaka_round2_2026
 
-# Round 1
-medaka_consensus -i data_meyerozyma/filtered_meyerozymaGuilliermondii.fastq -d outputs_meyerozyma/flye_output/assembly.fasta -o outputs_meyerozyma/medaka_round1 -t 8
+# Round 1 2025
+medaka_consensus -i outputs_meyerozyma/filtered_meyerozymaGuilliermondii2025.fastq.gz -d outputs_meyerozyma/flye_output2025/assembly.fasta -o outputs_meyerozyma/medaka_round1_2025 -t 8
 
-# Round 2
-medaka_consensus -i data_meyerozyma/filtered_meyerozymaGuilliermondii.fastq -d outputs_meyerozyma/medaka_round1/consensus.fasta -o outputs_meyerozyma/medaka_round2 -t 8
+# Round 2 2025
+medaka_consensus -i outputs_meyerozyma/filtered_meyerozymaGuilliermondii2025.fastq.gz -d outputs_meyerozyma/medaka_round1_2025/consensus.fasta -o outputs_meyerozyma/medaka_round2_2025 -t 8
+
+# Round 1 2026
+medaka_consensus -i outputs_meyerozyma/filtered_meyerozymaGuilliermondii2026.fastq.gz -d outputs_meyerozyma/flye_output2026/assembly.fasta -o outputs_meyerozyma/medaka_round1_2026 -t 8
+
+# Round 2 2026
+medaka_consensus -i outputs_meyerozyma/filtered_meyerozymaGuilliermondii2026.fastq.gz -d outputs_meyerozyma/medaka_round1_2026/consensus.fasta -o outputs_meyerozyma/medaka_round2_2026 -t 8
 ```
 
-## BUSCO 
-Debaryomyces
+
+## Completeness of assembly 
+### BUSCO 
+Debaryomyces 
 ```{bash}
-mkdir -p outputs_debaryomyces/busco_debaryomyces
+mkdir -p outputs_debaryomyces/busco_debaryomyces_2025
 
 # for Debaryomyces hansenii 
 docker run --rm \
   -v "$PWD":/data_debaryomyces \
   -w /data_debaryomyces \
   ezlabgva/busco:v6.0.0_cv1 \
-  busco -i outputs_debaryomyces/medaka_round2/consensus.fasta -o outputs_debaryomyces/busco_debaryomyces -l saccharomycetaceae_odb12 -m genome -c 8
+  busco -i outputs_debaryomyces/medaka_round2_2025/consensus.fasta \
+        -o outputs_debaryomyces/busco_debaryomyces_2025 \
+        -l saccharomycetaceae_odb12 \
+        -m genome \
+        -c 8 \
+        -f
+
+mkdir -p outputs_debaryomyces/busco_debaryomyces_2026
+
+# for Debaryomyces hansenii 
+docker run --rm \
+  -v "$PWD":/data_debaryomyces \
+  -w /data_debaryomyces \
+  ezlabgva/busco:v6.0.0_cv1 \
+  busco -i outputs_debaryomyces/medaka_round2_2026/consensus.fasta \
+        -o outputs_debaryomyces/busco_debaryomyces_2026 \
+        -l saccharomycetaceae_odb12 \
+        -m genome \
+        -c 8 \
+        -f
 ```
 
-Meyerozyma
+Meyerozyma 2025 sample 
 ```{bash}
 # for Meyerozyma guilliermondii 
-mkdir -p outputs_meyerozyma/busco_meyerozyma
+mkdir -p outputs_meyerozyma/busco_meyerozyma_2025
 
 docker run --rm \
   -v "$PWD":/data_meyerozyma \
   -w /data_meyerozyma \
   ezlabgva/busco:v6.0.0_cv1 \
-  busco -i outputs_meyerozyma/medaka_round2/consensus.fasta -o outputs_meyerozyma/busco_meyerozyma -l saccharomycetaceae_odb12 -m genome -c 8
+  busco -i outputs_meyerozyma/medaka_round2_2025/consensus.fasta \
+        -o outputs_meyerozyma/busco_meyerozyma_2025 \
+        -l saccharomycetaceae_odb12 \
+        -m genome \
+        -c 8
+
+mkdir -p outputs_meyerozyma/busco_meyerozyma_2026
+
+docker run --rm \
+  -v "$PWD":/data_meyerozyma \
+  -w /data_meyerozyma \
+  ezlabgva/busco:v6.0.0_cv1 \
+  busco -i outputs_meyerozyma/medaka_round2_2026/consensus.fasta \
+        -o outputs_meyerozyma/busco_meyerozyma_2026 \
+        -l saccharomycetaceae_odb12 \
+        -m genome \
+        -c 8
 ```
 
-## Quast 
-
+### Quast 
 quast - Debaryomyces 
 ```{bash}
-mkdir -p outputs_debaryomyces/quast_output
+mkdir -p outputs_debaryomyces/quast_output2025
 
 gunzip -k data_debaryomyces/*.gz
 
 docker run --rm -v "$(pwd)":/data_debaryomyces -w /data_debaryomyces quay.io/biocontainers/quast:5.3.0--py313pl5321h5ca1c30_2 \
-  quast.py outputs_debaryomyces/medaka_round2/consensus.fasta \
+  quast.py outputs_debaryomyces/medaka_round2_2025/consensus.fasta \
   -r data_debaryomyces/GCF_000006445.2_ASM644v2_genomic.fna \
   -g data_debaryomyces/GCF_000006445.2_ASM644v2_genomic.gff \
-  -o outputs_debaryomyces/quast_output
+  -o outputs_debaryomyces/quast_output2025
 ```
 
-quast - Meyerozyma
+quast - Meyerozyma 
 ```{bash}
-mkdir -p outputs_meyerozyma/quast_output
+mkdir -p outputs_meyerozyma/quast_output2025
 
 gunzip -k data_meyerozyma/*.gz
 
 docker run --rm -v "$(pwd)":/data_meyerozyma -w /data_meyerozyma quay.io/biocontainers/quast:5.3.0--py313pl5321h5ca1c30_2 \
-  quast.py outputs_meyerozyma/medaka_round2/consensus.fasta \
+  quast.py outputs_meyerozyma/medaka_round2_2025/consensus.fasta \
   -r data_meyerozyma/GCF_000149425.1_ASM14942v1_genomic.fna \
   -g data_meyerozyma/GCF_000149425.1_ASM14942v1_genomic.gff \
-  -o outputs_meyerozyma/quast_output
+  -o outputs_meyerozyma/quast_output2025
 ```
 
+# Increase assembly coverage
+## Concatenate same yeast strain fastq files for 2025 and 2026 to increase coverage for assembly
+```{bash}
+cat data_meyerozyma/filtered_meyerozymaGuilliermondii2025.fastq.gz data_meyerozyma/filtered_meyerozymaGuilliermondii2026.fastq.gz > data_meyerozyma/meyerozymaGuilliermondii_final.fastq.gz
+
+cat data_debaryomyces/filtered_debaryomycesHansenii2025.fastq.gz data_debaryomyces/filtered_debaryomycesHansenii2026.fastq.gz > data_debaryomyces/debaryomycesHansenii_final.fastq.gz
+```
+
+## Flye - 2025 + 2026 - Increase coverage 
+```{bash}
+conda activate flye-env
+# Run the Flye assembler, note the expected genome size
+flye --nano-raw data_debaryomyces/debaryomycesHansenii_final.fastq.gz --out-dir outputs_debaryomyces/flye_output --threads 8 --genome-size 12m --iterations 5
+flye --nano-raw data_meyerozyma/meyerozymaGuilliermondii_final.fastq.gz --out-dir outputs_meyerozyma/flye_output --threads 8 --genome-size 12m --iterations 5
+conda deactivate 
+```
+
+# Medaka 
+
+# Busco 
+
+# Quast
 
 ## Evaluate the assembly
 ### Structural annotation - funannotate 
@@ -216,8 +307,8 @@ IMAGE="nextgenusfs/funannotate:v1.8.15"
 PLATFORM="--platform linux/amd64"
 CPUS=8
 INPUT="data_debaryomyces/assembly_polished.fasta"
-SPECIES="Debaryomyces hansenii"   # e.g., "Pichia kluyveri" or "Hanseniaspora uvarum"
-STRAIN="???"        # e.g., "RASPBERRY" or "NK1"
+SPECIES="Debaryomyces hansenii"  
+STRAIN="KL2"      
 
 # Step 1: Clean redundant/short contigs ("genomic dust")
 docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data_debaryomyces -w /data_debaryomyces $PLATFORM $IMAGE \
@@ -260,8 +351,8 @@ IMAGE="nextgenusfs/funannotate:v1.8.15"
 PLATFORM="--platform linux/amd64"
 CPUS=8
 INPUT="data_meyerozyma/assembly_polished.fasta"
-SPECIES="Meyerozyma guilliermondii"   # e.g., "Pichia kluyveri" or "Hanseniaspora uvarum"
-STRAIN="????"        # e.g., "RASPBERRY" or "NK1"
+SPECIES="Meyerozyma guilliermondii"   
+STRAIN="A.W.1"        
 
 # Step 1: Clean redundant/short contigs ("genomic dust")
 docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data_meyerozyma -w /data_meyerozyma $PLATFORM $IMAGE \
