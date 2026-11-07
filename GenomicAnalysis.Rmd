@@ -289,12 +289,12 @@ docker run --rm -v "$(pwd)":/data_meyerozyma -w /data_meyerozyma quay.io/biocont
   -o outputs_meyerozyma/quast_output2026
 ```
 
-# Increase assembly coverage
+# Increase sequencing depth 
 ## Concatenate same yeast strain fastq files for 2025 and 2026 to increase coverage for assembly
 ```{bash}
-cat data_meyerozyma/filtered_meyerozymaGuilliermondii2025.fastq.gz data_meyerozyma/filtered_meyerozymaGuilliermondii2026.fastq.gz > data_meyerozyma/meyerozymaGuilliermondii_final.fastq.gz
+cat outputs_debaryomyces/filtered_debaryomycesHansenii2025.fastq.gz outputs_debaryomyces/filtered_debaryomycesHansenii2026.fastq.gz > data_debaryomyces/debaryomycesHansenii_final.fastq.gz
 
-cat data_debaryomyces/filtered_debaryomycesHansenii2025.fastq.gz data_debaryomyces/filtered_debaryomycesHansenii2026.fastq.gz > data_debaryomyces/debaryomycesHansenii_final.fastq.gz
+cat outputs_meyerozyma/filtered_meyerozymaGuilliermondii2025.fastq.gz outputs_meyerozyma/filtered_meyerozymaGuilliermondii2026.fastq.gz > data_meyerozyma/meyerozymaGuilliermondii_final.fastq.gz
 ```
 
 ## Flye - 2025 + 2026 - Increase coverage 
@@ -307,56 +307,134 @@ conda deactivate
 ```
 
 # Medaka 
+```{bash}
+# Ensure directories exist
+mkdir -p outputs_debaryomyces/medaka_round1 outputs_debaryomyces/medaka_round2
+mkdir -p outputs_meyerozyma/medaka_round1 outputs_meyerozyma/medaka_round2
+
+# Activate your environment
+conda activate medaka_final
+
+# Debaryomyces
+# Round 1 
+medaka_consensus -i data_debaryomyces/debaryomycesHansenii_final.fastq.gz -d outputs_debaryomyces/flye_output/assembly.fasta -o outputs_debaryomyces/medaka_round1 -t 8
+
+# Round 2 
+medaka_consensus -i data_debaryomyces/debaryomycesHansenii_final.fastq.gz -d outputs_debaryomyces/medaka_round1/consensus.fasta -o outputs_debaryomyces/medaka_round2 -t 8
+
+# Meyerozyma
+# Round 1 2026
+medaka_consensus -i data_meyerozyma/meyerozymaGuilliermondii_final.fastq.gz -d outputs_meyerozyma/flye_output/assembly.fasta -o outputs_meyerozyma/medaka_round1 -t 8
+
+# Round 2 2026
+medaka_consensus -i data_meyerozyma/meyerozymaGuilliermondii_final.fastq.gz -d outputs_meyerozyma/medaka_round1/consensus.fasta -o outputs_meyerozyma/medaka_round2 -t 8
+
+```
 
 # Busco 
+```{bash}
+# for Debaryomyces hansenii 
+mkdir -p outputs_debaryomyces/busco_debaryomyces
+
+docker run --rm \
+  -v "$PWD":/data_debaryomyces \
+  -w /data_debaryomyces \
+  ezlabgva/busco:v6.0.0_cv1 \
+  busco -i outputs_debaryomyces/medaka_round2/consensus.fasta \
+        -o outputs_debaryomyces/busco_debaryomyces \
+        -l saccharomycetaceae_odb12 \
+        -m genome \
+        -c 8 \
+        -f
+        
+# for Meyerozyma guilliermondii 
+mkdir -p outputs_meyerozyma/busco_meyerozyma
+
+docker run --rm \
+  -v "$PWD":/data_meyerozyma \
+  -w /data_meyerozyma \
+  ezlabgva/busco:v6.0.0_cv1 \
+  busco -i outputs_meyerozyma/medaka_round2/consensus.fasta \
+        -o outputs_meyerozyma/busco_meyerozyma \
+        -l saccharomycetaceae_odb12 \
+        -m genome \
+        -c 8 \
+        -f
+```
 
 # Quast
+```{bash}
+# for Debaryomyces hansenii 
+mkdir -p outputs_debaryomyces/quast_output
+
+# unzip downloaded files.  
+gunzip -k data_debaryomyces/*.gz
+
+docker run --rm -v "$(pwd)":/data_debaryomyces -w /data_debaryomyces quay.io/biocontainers/quast:5.3.0--py313pl5321h5ca1c30_2 \
+  quast.py outputs_debaryomyces/medaka_round2/consensus.fasta \
+  -r data_debaryomyces/GCF_000006445.2_ASM644v2_genomic.fna \
+  -g data_debaryomyces/GCF_000006445.2_ASM644v2_genomic.gff \
+  -o outputs_debaryomyces/quast_output
+  
+# for Meyerozyma guilliermondii 
+mkdir -p outputs_meyerozyma/quast_output
+
+gunzip -k data_meyerozyma/*.gz
+
+docker run --rm -v "$(pwd)":/data_meyerozyma -w /data_meyerozyma quay.io/biocontainers/quast:5.3.0--py313pl5321h5ca1c30_2 \
+  quast.py outputs_meyerozyma/medaka_round2/consensus.fasta \
+  -r data_meyerozyma/GCF_000149425.1_ASM14942v1_genomic.fna \
+  -g data_meyerozyma/GCF_000149425.1_ASM14942v1_genomic.gff \
+  -o outputs_meyerozyma/quast_output
+```
+
+```{bash}
+docker pull nextgenusfs/funannotate:v1.8.15
+```
 
 ## Evaluate the assembly
 ### Structural annotation - funannotate 
 funannotate - Debaryomyces
 ```{bash, eval=FALSE}
-mkdir -p outputs_debaryomyces/funannotate_out
-
-gunzip -k data_debaryomyces/GCF_000006445.2_ASM644v2_protein.faa.gz
+mkdir -p outputs_debaryomyces/funannotate_prep
 
 # Define reusable variables
 IMAGE="nextgenusfs/funannotate:v1.8.15"
 PLATFORM="--platform linux/amd64"
 CPUS=8
-INPUT="data_debaryomyces/assembly_polished.fasta"
+INPUT="outputs_debaryomyces/medaka_round2/consensus.fasta"
 SPECIES="Debaryomyces hansenii"  
 STRAIN="KL2"      
 
 # Step 1: Clean redundant/short contigs ("genomic dust")
-docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data_debaryomyces -w /data_debaryomyces $PLATFORM $IMAGE \
+docker run -u $(id -u):$(id -g) --rm -v "$PWD":/outputs_debaryomyces -w /outputs_debaryomyces $PLATFORM $IMAGE \
   funannotate clean \
   -i $INPUT \
-  -o data_debaryomyces/assembly_clean.fasta
+  -o outputs_debaryomyces/funannotate_prep/assembly_clean.fasta
 
 # Step 2: Sort contigs by length and standardize header names (scaffold_1, etc.)
-docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data_debaryomyces -w /data_debaryomyces $PLATFORM $IMAGE \
+docker run -u $(id -u):$(id -g) --rm -v "$PWD":/outputs_debaryomyces -w /outputs_debaryomyces $PLATFORM $IMAGE \
   funannotate sort \
-  -i data_debaryomyces/assembly_clean.fasta \
-  -o dat_debaryomycesa/assembly_sorted.fasta
+  -i outputs_debaryomyces/funannotate_prep/assembly_clean.fasta \
+  -o outputs_debaryomyces/funannotate_prep/assembly_sorted.fasta
 
 # Step 3: Soft-mask repetitive elements
-docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data_debaryomyces -w /data_debaryomyces $PLATFORM $IMAGE \
+docker run -u $(id -u):$(id -g) --rm -v "$PWD":/outputs_debaryomyces -w /outputs_debaryomyces $PLATFORM $IMAGE \
   funannotate mask \
-  -i data_debaryomyces/assembly_sorted.fasta \
-  -o data_debaryomyces/assembly_masked.fasta \
+  -i outputs_debaryomyces/funannotate_prep/assembly_sorted.fasta \
+  -o outputs_debaryomyces/funannotate_prep/assembly_masked.fasta \
   --cpus $CPUS
 
 # Step 4: Predict gene models using Saccharomycetes BUSCO models for training
-docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data_debaryomyces -w /data_debaryomyces $PLATFORM $IMAGE \
+docker run -u $(id -u):$(id -g) --rm -v "$PWD":/outputs_debaryomyces -w /outputs_debaryomyces $PLATFORM $IMAGE \
   funannotate predict \
-  -i data_debaryomyces/assembly_masked.fasta \
+  -i outputs_debaryomyces/funannotate_prep/assembly_masked.fasta \
   -o outputs_debaryomyces/funannotate_out \
   -s "$SPECIES" \
   --strain "$STRAIN" \
-  --busco_db saccharomycetes \
-  --augustus_species debaryomyces_hansenii
-  --protein_evidence data/GCF_000006445.2_ASM644v2_protein.faa.gz
+  --busco_db saccharomycetes_odb12 \
+  --augustus_species debaryomyces_hansenii \
+  --protein_evidence data_debaryomyces/GCF_000006445.2_ASM644v2_protein.faa \
   --cpus $CPUS
 ```
 
@@ -368,7 +446,7 @@ mkdir -p outputs_meyerozyma/funannotate_out
 IMAGE="nextgenusfs/funannotate:v1.8.15"
 PLATFORM="--platform linux/amd64"
 CPUS=8
-INPUT="data_meyerozyma/assembly_polished.fasta"
+INPUT="data_meyerozyma/medaka_round2/consensus.fasta"
 SPECIES="Meyerozyma guilliermondii"   
 STRAIN="A.W.1"        
 
@@ -400,7 +478,7 @@ docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data_meyerozyma -w /data_meyeroz
   --strain "$STRAIN" \
   --busco_db saccharomycetes \
   --augustus_species candida_albicans / pichia_stipitis\
-  --protein_evidence data/GCF_000149425.1_ASM14942v1_protein.faa
+  --protein_evidence data_meyerozyma/GCF_000149425.1_ASM14942v1_protein.faa
   --cpus $CPUS
 ```
 
