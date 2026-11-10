@@ -394,12 +394,25 @@ docker pull nextgenusfs/funannotate:v1.8.15
 
 ## Evaluate the assembly
 ### Structural annotation - funannotate 
+```{bash}
+# Download busco database for saccharmyetes 
+
+docker pull --platform linux/amd64 ghcr.io/nextgenusfs/funannotate:v1.9.0
+
+docker run -u "$(id -u):$(id -g)" --rm \
+  -v "$PWD":/data \
+  -w /data \
+  --platform linux/amd64 \
+  ghcr.io/nextgenusfs/funannotate:v1.9.0 \
+  funannotate setup -b saccharomycetes
+```
+
 funannotate - Debaryomyces
 ```{bash, eval=FALSE}
 mkdir -p outputs_debaryomyces/funannotate_prep
 
 # Define reusable variables
-IMAGE="nextgenusfs/funannotate:v1.8.15"
+IMAGE="ghcr.io/nextgenusfs/funannotate:v1.9.0"
 PLATFORM="--platform linux/amd64"
 CPUS=8
 INPUT="outputs_debaryomyces/medaka_round2/consensus.fasta"
@@ -407,32 +420,34 @@ SPECIES="Debaryomyces hansenii"
 STRAIN="KL2"      
 
 # Step 1: Clean redundant/short contigs ("genomic dust")
-docker run -u $(id -u):$(id -g) --rm -v "$PWD":/outputs_debaryomyces -w /outputs_debaryomyces $PLATFORM $IMAGE \
+docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data -w /data $PLATFORM $IMAGE \
   funannotate clean \
   -i $INPUT \
   -o outputs_debaryomyces/funannotate_prep/assembly_clean.fasta
 
 # Step 2: Sort contigs by length and standardize header names (scaffold_1, etc.)
-docker run -u $(id -u):$(id -g) --rm -v "$PWD":/outputs_debaryomyces -w /outputs_debaryomyces $PLATFORM $IMAGE \
+docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data -w /data $PLATFORM $IMAGE \
   funannotate sort \
   -i outputs_debaryomyces/funannotate_prep/assembly_clean.fasta \
   -o outputs_debaryomyces/funannotate_prep/assembly_sorted.fasta
 
 # Step 3: Soft-mask repetitive elements
-docker run -u $(id -u):$(id -g) --rm -v "$PWD":/outputs_debaryomyces -w /outputs_debaryomyces $PLATFORM $IMAGE \
-  funannotate mask \
-  -i outputs_debaryomyces/funannotate_prep/assembly_sorted.fasta \
-  -o outputs_debaryomyces/funannotate_prep/assembly_masked.fasta \
-  --cpus $CPUS
+docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data \
+ -v "$PWD/funannotate_db":/opt/databases \
+ -w /data $PLATFORM $IMAGE \
+ funannotate mask \
+ -i outputs_debaryomyces/funannotate_prep/assembly_sorted.fasta \
+ -o outputs_debaryomyces/funannotate_prep/assembly_masked.fasta \
+ --cpus $CPUS
 
 # Step 4: Predict gene models using Saccharomycetes BUSCO models for training
-docker run -u $(id -u):$(id -g) --rm -v "$PWD":/outputs_debaryomyces -w /outputs_debaryomyces $PLATFORM $IMAGE \
+docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data -w /data $PLATFORM $IMAGE \
   funannotate predict \
   -i outputs_debaryomyces/funannotate_prep/assembly_masked.fasta \
   -o outputs_debaryomyces/funannotate_out \
   -s "$SPECIES" \
   --strain "$STRAIN" \
-  --busco_db saccharomycetes_odb12 \
+  --busco_db saccharomycetes \
   --augustus_species debaryomyces_hansenii \
   --protein_evidence data_debaryomyces/GCF_000006445.2_ASM644v2_protein.faa \
   --cpus $CPUS
@@ -440,46 +455,97 @@ docker run -u $(id -u):$(id -g) --rm -v "$PWD":/outputs_debaryomyces -w /outputs
 
 funannotate - Meyerozyma
 ```{bash}
-mkdir -p outputs_meyerozyma/funannotate_out
+#mkdir -p outputs_meyerozyma/funannotate_prep
+
+docker pull --platform linux/amd64 ghcr.io/nextgenusfs/funannotate:v1.9.0
 
 # Define reusable variables
-IMAGE="nextgenusfs/funannotate:v1.8.15"
+IMAGE="ghcr.io/nextgenusfs/funannotate:v1.9.0"
 PLATFORM="--platform linux/amd64"
 CPUS=8
-INPUT="data_meyerozyma/medaka_round2/consensus.fasta"
+INPUT="outputs_meyerozyma/medaka_round2/consensus.fasta"
 SPECIES="Meyerozyma guilliermondii"   
 STRAIN="A.W.1"        
 
 # Step 1: Clean redundant/short contigs ("genomic dust")
-docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data_meyerozyma -w /data_meyerozyma $PLATFORM $IMAGE \
+docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data -w /data $PLATFORM "$IMAGE" \
   funannotate clean \
-  -i $INPUT \
-  -o data_meyerozyma/assembly_clean.fasta
+  -i "$INPUT" \
+  -o outputs_meyerozyma/funannotate_prep/assembly_clean.fasta
 
 # Step 2: Sort contigs by length and standardize header names (scaffold_1, etc.)
-docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data_meyerozyma -w /data_meyerozyma $PLATFORM $IMAGE \
+docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data -w /data $PLATFORM "$IMAGE" \
   funannotate sort \
-  -i data_meyerozyma/assembly_clean.fasta \
-  -o data_meyerozyma/assembly_sorted.fasta
+  -i outputs_meyerozyma/funannotate_prep/assembly_clean.fasta \
+  -o outputs_meyerozyma/funannotate_prep/assembly_sorted.fasta
 
 # Step 3: Soft-mask repetitive elements
-docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data_meyerozyma -w /data_meyerozyma $PLATFORM $IMAGE \
+docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data -w /data $PLATFORM "$IMAGE" \
   funannotate mask \
-  -i data_meyerozyma/assembly_sorted.fasta \
-  -o data_meyerozyma/assembly_masked.fasta \
-  --cpus $CPUS
+  -i outputs_meyerozyma/funannotate_prep/assembly_sorted.fasta \
+  -o outputs_meyerozyma/funannotate_prep/assembly_masked.fasta \
+  --cpus "$CPUS"
+```
+```{bash}
+conda install -c bioconda seqkit
+conda create -n seqkit -c bioconda seqkit
+conda activate seqkit
+
+#  check all 3 files are simlar in genome length 
+seqkit stats outputs_meyerozyma/funannotate_prep/*.fasta
+
+# check contig 
+seqkit fx2tab -nl outputs_meyerozyma/funannotate_prep/assembly_sorted.fasta | head -21
+
+conda deactivate 
+
+python3 - <<'PY'
+from Bio import SeqIO
+
+f = "outputs_meyerozyma/funannotate_prep/assembly_masked.fasta"
+
+total = 0
+lowercase = 0
+
+for record in SeqIO.parse(f, "fasta"):
+    seq = str(record.seq)
+    total += len(seq)
+    lowercase += sum(c.islower() for c in seq)
+
+print(f"Total bases: {total:,}")
+print(f"Masked bases: {lowercase:,}")
+print(f"Masked percentage: {100*lowercase/total:.2f}%")
+PY
+```
+
+# step 4 
+```{bash}
+# Define reusable variables
+IMAGE="ghcr.io/nextgenusfs/funannotate:v1.9.0"
+PLATFORM="--platform linux/amd64"
+CPUS=8
+INPUT="outputs_meyerozyma/medaka_round2/consensus.fasta"
+SPECIES="Meyerozyma guilliermondii"   
+STRAIN="A.W.1"
+
+docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data \
+-v "$PWD/funannotate_db":/opt/databases \
+-w /data $PLATFORM "$IMAGE" \
+funannotate setup -d /opt/databases -b dikarya
+
 
 # Step 4: Predict gene models using Saccharomycetes BUSCO models for training
-docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data_meyerozyma -w /data_meyerozyma $PLATFORM $IMAGE \
+docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data \
+  -v "$PWD/funannotate_db":/opt/databases \
+  -w /data $PLATFORM "$IMAGE" \
   funannotate predict \
-  -i data_meyerozyma/assembly_masked.fasta \
+  -i outputs_meyerozyma/funannotate_prep/assembly_masked.fasta \
   -o outputs_meyerozyma/funannotate_out \
   -s "$SPECIES" \
   --strain "$STRAIN" \
-  --busco_db saccharomycetes \
-  --augustus_species candida_albicans / pichia_stipitis\
-  --protein_evidence data_meyerozyma/GCF_000149425.1_ASM14942v1_protein.faa
-  --cpus $CPUS
+  --augustus_species candida_guilliermondii \
+  --protein_evidence data_meyerozyma/GCF_000149425.1_ASM14942v1_protein.faa \
+  --cpus "$CPUS"
 ```
 
 
