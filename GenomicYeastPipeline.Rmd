@@ -6,77 +6,73 @@ date: "2026-11-12"
 
 # Load Required Libraries & Directories 
 ```{r setup, include=FALSE}
-library(here)
-
-# Identify project directory
-PROJECT_DIR <- here::here()
-
-# Define eggNOG database directory
-EGGNOG_DB_PATH <- here::here("eggnog_db")
-
-# Define input and output directories
-INPUT_DIR <- here::here("data_debaryomyces")
-OUTPUT_DIR <- here::here("outputs_debaryomyces")
 
 ```
+
+# Conda Environment 
+```{bash, eval=FALSE}
+eval "$(conda shell.bash hook)"  # initialize conda
+```
+
 
 # Load Reference Datasets needed for Quast and funannotate
 Using NCBI genome search: 
 [Debaryomyces hansenii](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000006445.2/)
 [Meyerozyma guilliermondii ](https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_000149425.1/)
-```{bash}
+```{bash refseq, eval=FALSE}
 # for Debaryomyces hansenii
 # Download the reference genome from refseq .fna file 
 wget -nc \
--P data_debaryomyces/ \
-https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/006/445/GCF_000006445.2_ASM644v2/GCF_000006445.2_ASM644v2_genomic.fna.gz
+  -P data_debaryomyces/ \
+  https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/006/445/GCF_000006445.2_ASM644v2/GCF_000006445.2_ASM644v2_genomic.fna.gz
 
 # Download the genome annotation file from refseq .ggf file 
 wget -nc \
--P data_debaryomyces/ \
-https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/006/445/GCF_000006445.2_ASM644v2/GCF_000006445.2_ASM644v2_genomic.gff.gz
+  -P data_debaryomyces/ \
+  https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/006/445/GCF_000006445.2_ASM644v2/GCF_000006445.2_ASM644v2_genomic.gff.gz
 
 # Download the reference proteome from refseq .faa file 
 wget -nc \
--P data_debaryomyces/ \
-https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/006/445/GCF_000006445.2_ASM644v2/GCF_000006445.2_ASM644v2_protein.faa.gz
+  -P data_debaryomyces/ \
+  https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/006/445/GCF_000006445.2_ASM644v2/GCF_000006445.2_ASM644v2_protein.faa.gz
 
 # for Meyerozyma guilliermondii 
 # Download the reference genome from refseq .fna file 
 wget -nc \
--P data_meyerozyma/ \
-https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/149/425/GCF_000149425.1_ASM14942v1/GCF_000149425.1_ASM14942v1_genomic.fna.gz
+  -P data_meyerozyma/ \
+  https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/149/425/GCF_000149425.1_ASM14942v1/GCF_000149425.1_ASM14942v1_genomic.fna.gz
 
 # Download the genome annotation file from refseq .ggf file 
 wget -nc \
--P data_meyerozyma/ \
-https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/149/425/GCF_000149425.1_ASM14942v1/GCF_000149425.1_ASM14942v1_genomic.gff.gz
+  -P data_meyerozyma/ \
+  https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/149/425/GCF_000149425.1_ASM14942v1/GCF_000149425.1_ASM14942v1_genomic.gff.gz
 
 # Download the reference proteome from refseq .faa file 
 wget -nc \
--P data_meyerozyma/ \
-https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/149/425/GCF_000149425.1_ASM14942v1/GCF_000149425.1_ASM14942v1_protein.faa.gz
+  -P data_meyerozyma/ \
+  https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/149/425/GCF_000149425.1_ASM14942v1/GCF_000149425.1_ASM14942v1_protein.faa.gz
 ```
 
 # Establish environments 
-## Create sequali environment 
-```{bash seqauli setup, eval=FALSE}
+## Creates sequali environment 
+```{bash seqauli-setup, eval=FALSE}
+
 conda create -n sequali-env python=3.11 -c conda-forge
 conda activate sequali-env
 conda install -c conda-forge -c bioconda sequali=1.0.2
 conda deactivate 
 ```
 
-## Create Flye environment 
-```{bash Flye setup, eval=FALSE}
+## Creates Flye environment 
+```{bash flye-setup, eval=FALSE}
 conda create -n flye-env python=3.10 -c conda-forge
 conda activate flye-env
 conda install flye=2.9.6 -c bioconda
 conda deactivate
 ```
 
-## Create medaka environment
-```{bash medaka setup, eval=FALSE}
+## Creates medaka environment
+```{bash medaka-setup, eval=FALSE}
 conda create -n medaka_final -c conda-forge -c bioconda -c nanoporetech medaka=2.2.1 python=3.10 -y
 conda activate medaka_final
 conda deactivate
@@ -84,7 +80,9 @@ conda deactivate
 
 # Sequali Initial 
 Initial QC analysis of Raw reads 
-```{bash, eval=FALSE}
+Files required: raw long-read sequence data (fastq)
+Output: html report
+```{bash sequali-inital, eval=FALSE}
 conda activate sequali-env
 sequali --outdir outputs_debaryomyces/dh_sequali_reports data_debaryomyces/debaryomycesHansenii2025.fastq
 sequali --outdir outputs_meyerozyma/mg_sequali_reports data_meyerozyma/meyerozymaGuilliermondii2025.fastq
@@ -94,14 +92,15 @@ conda deactivate
 ```
 
 # Filtlong 
-
 Use conda to install [filtlong](https://anaconda.org/channels/bioconda/packages/filtlong/overview) package. Allows filtering of long reads based on certain criteria. Ie. average Q score or size. 
-```{bash, eval=FALSE}
+```{bash filtlong-install, eval=FALSE}
 conda install bioconda::filtlong=0.3.1
 ```
 
-Run downloaded file to analyse using filtlong package based on the QC sequali html file: 
-```{bash, eval=FALSE}
+Run downloaded file to analyse using filtlong package based on the QC sequali html file:
+Input files required: raw long-read sequence data (fastq)
+Output: filtered long-read sequence data (fastq)
+```{bash filtlong-filter, eval=FALSE}
 filtlong --keep_percent 90 --min_length 1000 data_debaryomyces/debaryomycesHansenii2025.fastq | gzip > outputs_debaryomyces/filtered_debaryomycesHansenii2025.fastq.gz
 
 filtlong --keep_percent 90 --min_length 1000 data_debaryomyces/debaryomycesHansenii2026.fastq | gzip > outputs_debaryomyces/filtered_debaryomycesHansenii2026.fastq.gz
@@ -112,7 +111,9 @@ filtlong --keep_percent 90 --min_length 1000 data_meyerozyma/meyerozymaGuillierm
 ```
 
 # Sequali After Filtering
-```{bash}
+Input files required: filtered long-read sequence data (fastq)
+Output: html report 
+```{bash sequali-filter, eval=FALSE}
 conda activate sequali-env
 sequali --outdir outputs_debaryomyces/filtered_sequali_reports outputs_debaryomyces/filtered_debaryomycesHansenii2025.fastq.gz
 
@@ -127,15 +128,17 @@ conda deactivate
 
 # Increase sequencing depth 
 ## Concatenate same yeast strain fastq files for 2025 and 2026 to increase coverage for assembly
-```{bash}
+```{bash file-cat, eval=FALSE}
 cat outputs_debaryomyces/filtered_debaryomycesHansenii2025.fastq.gz outputs_debaryomyces/filtered_debaryomycesHansenii2026.fastq.gz > data_debaryomyces/debaryomycesHansenii_final.fastq.gz
 
 cat outputs_meyerozyma/filtered_meyerozymaGuilliermondii2025.fastq.gz outputs_meyerozyma/filtered_meyerozymaGuilliermondii2026.fastq.gz > data_meyerozyma/meyerozymaGuilliermondii_final.fastq.gz
 ```
 
 # Flye 
-[Flye](https://github.com/mikolmogorov/Flye/blob/flye/docs/USAGE.md)
-```{bash, eval=FALSE}
+[Flye Documentation](https://github.com/mikolmogorov/Flye/blob/flye/docs/USAGE.md)
+Input files required: filtered long-read sequence data (fastq)
+Output: assembly.fasta and flye.log
+```{bash flye-de-novo, eval=FALSE}
 mkdir -p outputs_debaryomyces/flye_output
 mkdir -p outputs_meyerozyma/flye_output
 
@@ -149,7 +152,8 @@ conda deactivate
 ```
 
 # Medaka 
-```{bash}
+[Medaka Documentation](https://github.com/nanoporetech/medaka)
+```{bash medaka-execution, eval=FALSE}
 # Ensure directories exist
 mkdir -p outputs_debaryomyces/medaka_round1 outputs_debaryomyces/medaka_round2
 mkdir -p outputs_meyerozyma/medaka_round1 outputs_meyerozyma/medaka_round2
@@ -159,23 +163,23 @@ conda activate medaka_final
 
 # Debaryomyces
 # Round 1 
-medaka_consensus -i data_debaryomyces/debaryomycesHansenii_final.fastq.gz -d outputs_debaryomyces/flye_output/assembly.fasta -o outputs_debaryomyces/medaka_round1 -t 8
+medaka_consensus -i data_debaryomyces/debaryomycesHansenii_final.fastq.gz -d outputs_debaryomyces/flye_output/assembly.fasta -o outputs_debaryomyces/medaka_round1 -t 8 -m r1041_e82_400bps_hac_v5.0.0_model_pt.tar.gz
 
 # Round 2 
-medaka_consensus -i data_debaryomyces/debaryomycesHansenii_final.fastq.gz -d outputs_debaryomyces/medaka_round1/consensus.fasta -o outputs_debaryomyces/medaka_round2 -t 8
+medaka_consensus -i data_debaryomyces/debaryomycesHansenii_final.fastq.gz -d outputs_debaryomyces/medaka_round1/consensus.fasta -o outputs_debaryomyces/medaka_round2 -t 8 -m r1041_e82_400bps_hac_v5.0.0_model_pt.tar.gz
 
 # Meyerozyma
 # Round 1 2026
-medaka_consensus -i data_meyerozyma/meyerozymaGuilliermondii_final.fastq.gz -d outputs_meyerozyma/flye_output/assembly.fasta -o outputs_meyerozyma/medaka_round1 -t 8
+medaka_consensus -i data_meyerozyma/meyerozymaGuilliermondii_final.fastq.gz -d outputs_meyerozyma/flye_output/assembly.fasta -o outputs_meyerozyma/medaka_round1 -t 8 -m r1041_e82_400bps_hac_v5.0.0_model_pt.tar.gz
 
 # Round 2 2026
-medaka_consensus -i data_meyerozyma/meyerozymaGuilliermondii_final.fastq.gz -d outputs_meyerozyma/medaka_round1/consensus.fasta -o outputs_meyerozyma/medaka_round2 -t 8
+medaka_consensus -i data_meyerozyma/meyerozymaGuilliermondii_final.fastq.gz -d outputs_meyerozyma/medaka_round1/consensus.fasta -o outputs_meyerozyma/medaka_round2 -t 8 -m r1041_e82_400bps_hac_v5.0.0_model_pt.tar.gz
 
 conda deactivate
 ```
 
 # Busco 
-```{bash}
+```{bash busco, eval=FALSE}
 # for Debaryomyces hansenii 
 mkdir -p outputs_debaryomyces/busco_debaryomyces
 
@@ -206,7 +210,7 @@ docker run --rm \
 ```
 
 # Quast
-```{bash}
+```{bash quast, eval=FALSE}
 # for Debaryomyces hansenii 
 mkdir -p outputs_debaryomyces/quast_output
 
@@ -233,7 +237,7 @@ docker run --rm -v "$(pwd)":/data_meyerozyma -w /data_meyerozyma quay.io/biocont
 
 # funannotate 
 ## Debaryomyces hansenii 
-```{bash}
+```{bash d-hansenii-funannotate, eval=FALSE}
 mkdir -p outputs_debaryomyces/funannotate_prep
 
 docker pull --platform linux/amd64 nextgenusfs/funannotate:v1.8.15
@@ -260,7 +264,6 @@ docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data -w /data $PLATFORM $IMAGE \
 
 # Step 3: Soft-mask repetitive elements
 docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data \
- -v "$PWD/funannotate_db":/opt/databases \
  -w /data $PLATFORM $IMAGE \
  funannotate mask \
  -i outputs_debaryomyces/funannotate_prep/assembly_sorted.fasta \
@@ -282,7 +285,7 @@ docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data \
 ```
 
 ## Meyerozyma guilliermondii 
-```{bash}
+```{bash m-guilliermondii-funannotate, eval=FALSE}
 mkdir -p outputs_meyerozyma/funannotate_prep
 
 docker pull --platform linux/amd64 nextgenusfs/funannotate:v1.8.15
@@ -331,17 +334,16 @@ docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data \
 
 # eggNOG-mapper 
 
-```{bash eggNOG setup}
+```{bash eggnog-setup, eval=FALSE}
 # Create a dedicated Conda environment to install eggNOG-mapper and its fast sequence aligner (diamond):
-conda create -n eggnog_env -c conda-forge -c bioconda python=3.10 eggnog-mapper
+conda create -n eggnog_env -c conda-forge -c bioconda python=3.10 eggnog-mapper=2.1.13 diamond=2.2.8
 ```
 
 
-```{bash eggNOG execution}
+```{bash eggnog-execution, eval=FALSE}
 # run eggNOG-mapper
 eval "$(conda shell.bash hook)"  # initialize conda 
 conda activate eggnog_env
-
 
 EGGNOG_DB_PATH="eggnog_db"
 
@@ -369,3 +371,8 @@ emapper.py \
   
   conda deactivate
 ```
+
+```{r}
+sessionInfo()
+```
+
