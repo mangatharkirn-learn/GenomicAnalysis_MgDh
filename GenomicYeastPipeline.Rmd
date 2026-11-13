@@ -14,6 +14,15 @@ date: "2026-11-12"
 eval "$(conda shell.bash hook)"  # initialize conda
 ```
 
+# Create required directories
+```{bash}
+mkdir -p data_debaryomyces
+mkdir -p data_meyerozyma
+
+mkdir -p outputs_debaryomyces
+mkdir -p outputs_meyerozyma
+```
+
 
 # Load Reference Datasets needed for Quast and funannotate
 Using NCBI genome search: 
@@ -51,12 +60,14 @@ wget -nc \
 wget -nc \
   -P data_meyerozyma/ \
   https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/149/425/GCF_000149425.1_ASM14942v1/GCF_000149425.1_ASM14942v1_protein.faa.gz
+  
+# unzip downloaded files.  
+gunzip -k data_debaryomyces/*.gz
 ```
 
 # Establish environments 
 ## Creates sequali environment 
 ```{bash seqauli-setup, eval=FALSE}
-
 conda create -n sequali-env python=3.11 -c conda-forge
 conda activate sequali-env
 conda install -c conda-forge -c bioconda sequali=1.0.2
@@ -97,7 +108,6 @@ Use conda to install [filtlong](https://anaconda.org/channels/bioconda/packages/
 conda install bioconda::filtlong=0.3.1
 ```
 
-Run downloaded file to analyse using filtlong package based on the QC sequali html file:
 Input files required: raw long-read sequence data (fastq)
 Output: filtered long-read sequence data (fastq)
 ```{bash filtlong-filter, eval=FALSE}
@@ -214,9 +224,6 @@ docker run --rm \
 # for Debaryomyces hansenii 
 mkdir -p outputs_debaryomyces/quast_output
 
-# unzip downloaded files.  
-gunzip -k data_debaryomyces/*.gz
-
 docker run --rm -v "$(pwd)":/data_debaryomyces -w /data_debaryomyces quay.io/biocontainers/quast:5.3.0--py313pl5321h5ca1c30_2 \
   quast.py outputs_debaryomyces/medaka_round2/consensus.fasta \
   -r data_debaryomyces/GCF_000006445.2_ASM644v2_genomic.fna \
@@ -270,7 +277,7 @@ docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data \
  -o outputs_debaryomyces/funannotate_prep/assembly_masked.fasta \
  --cpus $CPUS
  
-# Step 4: Predict gene models using Saccharomycetes BUSCO models for training
+# Step 4: Predict gene models using Dikarya BUSCO models for training
 docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data \
   -w /data $PLATFORM "$IMAGE" \
   funannotate predict \
@@ -317,9 +324,8 @@ docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data -w /data $PLATFORM "$IMAGE"
   -o outputs_meyerozyma/funannotate_prep/assembly_masked.fasta \
   --cpus "$CPUS"
 
-# Step 4: Predict gene models using Saccharomycetes BUSCO models for training
+# Step 4: Predict gene models using Dikarya BUSCO models for training
 docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data \
-  -v "$PWD/funannotate_db":/opt/databases \
   -w /data $PLATFORM "$IMAGE" \
   funannotate predict \
   -i outputs_meyerozyma/funannotate_prep/assembly_masked.fasta \
@@ -334,6 +340,7 @@ docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data \
 
 # eggNOG-mapper 
 
+[eggNOG-mapper Documentation](https://github.com/eggnogdb/eggnog-mapper/tree/main)
 ```{bash eggnog-setup, eval=FALSE}
 # Create a dedicated Conda environment to install eggNOG-mapper and its fast sequence aligner (diamond):
 conda create -n eggnog_env -c conda-forge -c bioconda python=3.10 eggnog-mapper=2.1.13 diamond=2.2.8
