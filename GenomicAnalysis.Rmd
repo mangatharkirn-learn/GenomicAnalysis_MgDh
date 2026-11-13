@@ -5,7 +5,7 @@ output: html_notebook
 
 ### Load Required Libraries
 ```{r}
-
+library(here)
 ```
 
 
@@ -55,8 +55,7 @@ conda install -c conda-forge -c bioconda sequali
 ```
 
 
-### Run inital QC in Sequali Environment on d. Hansenii and m. Guilliermondii
-Using Preliminary data 
+## Run inital QC in Sequali Environment on d. Hansenii and m. Guilliermondii
 ```{bash, eval=FALSE}
 conda activate sequali-env
 sequali --outdir outputs_debaryomyces/dh_sequali_reports data_debaryomyces/debaryomycesHansenii2025.fastq
@@ -362,6 +361,37 @@ docker run --rm \
         -f
 ```
 
+# Busco against reference sequences 
+```{bash}
+# for Debaryomyces hansenii 
+mkdir -p outputs_debaryomyces/busco_debaryomyces_ref
+
+docker run --rm \
+  -v "$PWD":/data_debaryomyces \
+  -w /data_debaryomyces \
+  ezlabgva/busco:v6.0.0_cv1 \
+  busco -i data_debaryomyces/GCF_000006445.2_ASM644v2_genomic.fna \
+        -o outputs_debaryomyces/busco_debaryomyces_ref \
+        -l saccharomycetaceae_odb12 \
+        -m genome \
+        -c 8 \
+        -f
+        
+# for Meyerozyma guilliermondii 
+mkdir -p outputs_meyerozyma/busco_meyerozyma_ref
+
+docker run --rm \
+  -v "$PWD":/data_meyerozyma \
+  -w /data_meyerozyma \
+  ezlabgva/busco:v6.0.0_cv1 \
+  busco -i data_meyerozyma/GCF_000149425.1_ASM14942v1_genomic.fna \
+        -o outputs_meyerozyma/busco_meyerozyma_ref \
+        -l saccharomycetaceae_odb12 \
+        -m genome \
+        -c 8 \
+        -f
+```
+
 # Quast
 ```{bash}
 # for Debaryomyces hansenii 
@@ -388,23 +418,28 @@ docker run --rm -v "$(pwd)":/data_meyerozyma -w /data_meyerozyma quay.io/biocont
   -o outputs_meyerozyma/quast_output
 ```
 
-```{bash}
-docker pull nextgenusfs/funannotate:v1.8.15
-```
-
 ## Evaluate the assembly
 ### Structural annotation - funannotate 
 ```{bash}
-# Download busco database for saccharmyetes 
+# Download busco database for dikarya
 
-docker pull --platform linux/amd64 ghcr.io/nextgenusfs/funannotate:v1.9.0
+#docker pull --platform linux/amd64 ghcr.io/nextgenusfs/funannotate:v1.9.0
 
-docker run -u "$(id -u):$(id -g)" --rm \
-  -v "$PWD":/data \
+docker pull --platform linux/amd64 nextgenusfs/funannotate:v1.8.15
+
+docker run -u "$(id -u):$(id -g)" --rm -v "$PWD":/data \
+  -v "$PWD/funannotate_db":/opt/databases \
   -w /data \
   --platform linux/amd64 \
-  ghcr.io/nextgenusfs/funannotate:v1.9.0 \
+  nextgenusfs/funannotate:v1.8.15 \
   funannotate setup -b saccharomycetes
+  
+docker run -u "$(id -u):$(id -g)" --rm -v "$PWD":/data \
+  -v "$PWD/funannotate_db":/opt/databases \
+  -w /data \
+  --platform linux/amd64 \
+  nextgenusfs/funannotate:v1.8.15 \
+  funannotate setup -d /opt/databases -b dikarya
 ```
 
 funannotate - Debaryomyces
@@ -412,7 +447,7 @@ funannotate - Debaryomyces
 mkdir -p outputs_debaryomyces/funannotate_prep
 
 # Define reusable variables
-IMAGE="ghcr.io/nextgenusfs/funannotate:v1.9.0"
+IMAGE="nextgenusfs/funannotate:v1.8.15"
 PLATFORM="--platform linux/amd64"
 CPUS=8
 INPUT="outputs_debaryomyces/medaka_round2/consensus.fasta"
@@ -455,7 +490,7 @@ docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data -w /data $PLATFORM $IMAGE \
 
 funannotate - Meyerozyma
 ```{bash}
-#mkdir -p outputs_meyerozyma/funannotate_prep
+mkdir -p outputs_meyerozyma/funannotate_prep
 
 docker pull --platform linux/amd64 ghcr.io/nextgenusfs/funannotate:v1.9.0
 
@@ -486,6 +521,7 @@ docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data -w /data $PLATFORM "$IMAGE"
   -o outputs_meyerozyma/funannotate_prep/assembly_masked.fasta \
   --cpus "$CPUS"
 ```
+
 ```{bash}
 conda install -c bioconda seqkit
 conda create -n seqkit -c bioconda seqkit
@@ -521,31 +557,33 @@ PY
 # step 4 
 ```{bash}
 # Define reusable variables
-IMAGE="ghcr.io/nextgenusfs/funannotate:v1.9.0"
+IMAGE="nextgenusfs/funannotate:v1.8.15"
 PLATFORM="--platform linux/amd64"
 CPUS=8
 INPUT="outputs_meyerozyma/medaka_round2/consensus.fasta"
 SPECIES="Meyerozyma guilliermondii"   
 STRAIN="A.W.1"
 
-docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data \
--v "$PWD/funannotate_db":/opt/databases \
--w /data $PLATFORM "$IMAGE" \
-funannotate setup -d /opt/databases -b dikarya
-
 
 # Step 4: Predict gene models using Saccharomycetes BUSCO models for training
 docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data \
-  -v "$PWD/funannotate_db":/opt/databases \
   -w /data $PLATFORM "$IMAGE" \
   funannotate predict \
   -i outputs_meyerozyma/funannotate_prep/assembly_masked.fasta \
   -o outputs_meyerozyma/funannotate_out \
   -s "$SPECIES" \
   --strain "$STRAIN" \
+  --busco_db dikarya \
   --augustus_species candida_guilliermondii \
   --protein_evidence data_meyerozyma/GCF_000149425.1_ASM14942v1_protein.faa \
   --cpus "$CPUS"
+```
+```{bash}
+docker run --rm \
+  -v "$PWD/funannotate_db_old":/opt/databases \
+  --platform linux/amd64 \
+  ghcr.io/nextgenusfs/funannotate:v1.9.0 \
+  funannotate check --show-versions
 ```
 
 
@@ -554,13 +592,22 @@ docker run -u $(id -u):$(id -g) --rm -v "$PWD":/data \
 ```{bash}
 # Create a dedicated Conda environment to install eggNOG-mapper and its fast sequence aligner (diamond):
 conda create -n eggnog_env -c conda-forge -c bioconda python=3.10 eggnog-mapper
+```
 
+```{r}
+library(here)
+# Define eggNOG database directory
+EGGNOG_DB_PATH <- here::here("eggnog_db")
+```
+
+```{bash}
 # run eggNOG-mapper
 eval "$(conda shell.bash hook)"  # initialize conda 
 conda activate eggnog_env
 
 # USB to get eggnog_data on compute
-EGGNOG_DB_PATH=/Users/hmangat02/Desktop/GenomicAnalysis/eggnog_db 
+
+EGGNOG_DB_PATH="eggnog_db" 
 
 # Debaryomyces
 emapper.py \
@@ -578,10 +625,16 @@ emapper.py \
   -i outputs_meyerozyma/funannotate_out/predict_results/*.proteins.fa \
   --output isolate_functional \
   --output_dir outputs_meyerozyma/funannotate_out \
-  --data_dir $EGGNOG_DB_PATH \
+  --data_dir eggnog_db \
   --decorate_gff yes \
   --excel \
   -m diamond \
   --cpu 8
+```
+
+# COMPARISON
+figure out a good search term to filter eggNOG results, and use tidyverse and ggplot to create visualization to compare 
+```{r}
+
 ```
 
